@@ -1,0 +1,29 @@
+# Développement local avec PostgreSQL. Non testé dans ce squelette : ajustez au besoin.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: gyblood
+      POSTGRES_PASSWORD: gyblood
+      POSTGRES_DB: gyblood
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://gyblood:gyblood@db:5432/gyblood
+      UPLOAD_DIR: /data/uploads
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    volumes:
+      - uploads:/data/uploads
+
+volumes:
+  dbdata:
+  uploads:
