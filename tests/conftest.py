@@ -19,6 +19,20 @@ os.environ.update(
         "GOOGLE_CLIENT_ID": "test-client-id",
         "GOOGLE_CLIENT_SECRET": "test-client-secret",
         "PUBLIC_BASE_URL": "http://testserver",
+        "API_PREFIX": "/api/v1",
+        "JWT_ALGORITHM": "HS256",
+        "OAUTH_STATE_MINUTES": "10",
+        "AUTH_CODE_MINUTES": "2",
+        "DEFAULT_SEARCH_RADIUS_KM": "10",
+        "SEARCH_CANDIDATE_LIMIT": "500",
+        "SEARCH_MAX_RESULTS": "50",
+        "PAGE_DEFAULT_SIZE": "20",
+        "PAGE_MAX_SIZE": "100",
+        "IMAGE_CACHE_SECONDS": "3600",
+        "GOOGLE_AUTH_URL": "https://accounts.google.com/o/oauth2/v2/auth",
+        "GOOGLE_TOKEN_URL": "https://oauth2.googleapis.com/token",
+        "GOOGLE_SCOPE": "openid email profile",
+        "EXTERNAL_TIMEOUT_SECONDS": "10",
     }
 )
 

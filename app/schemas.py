@@ -53,6 +53,12 @@ class RegisterRequest(CamelModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
     role: UserRole
+    display_name: str | None = Field(default=None, max_length=120)
+
+    @field_validator("display_name")
+    @classmethod
+    def clean_display_name(cls, value: str | None) -> str | None:
+        return value.strip() or None if value else None
 
     @field_validator("email")
     @classmethod
@@ -302,6 +308,7 @@ class CampaignDto(CamelModel):
     funds_received: int
     joined: bool
     description: str | None = None
+    image_url: str | None = None
 
 
 class FundingDto(CamelModel):

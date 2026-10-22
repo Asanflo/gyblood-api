@@ -3,6 +3,7 @@
 import math
 from collections.abc import Callable
 from typing import TypeVar
+from app.config import settings
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
@@ -153,6 +154,9 @@ def campaign_dto(campaign: Campaign, funds_received: int, joined: bool) -> s.Cam
         funds_received=funds_received,
         joined=joined,
         description=campaign.description,
+        image_url=(
+            f"{settings.public_base_url.rstrip('/')}/api/v1/campaigns/{campaign.id}/image" if campaign.image_path else None
+        ),
     )
 
 

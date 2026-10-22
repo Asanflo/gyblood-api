@@ -30,7 +30,7 @@ from app.utils import as_utc, utcnow
 router = APIRouter(tags=["auth"])  # monté sous /api/v1
 oauth_router = APIRouter(tags=["oauth"])  # monté à la racine : /oauth2/...
 
-APP_CALLBACK = "gyblood://auth"  # schéma déclaré dans WebAuthenticationCallbackActivity (MAUI)
+APP_CALLBACK = settings.app_callback 
 
 
 @router.post("/auth/register", response_model=s.AuthResponse, status_code=201)
@@ -40,7 +40,9 @@ def register(body: s.RegisterRequest, db: Session = Depends(get_db)):
     if db.scalar(select(User.id).where(User.email == body.email)) is not None:
         raise ApiError(409, "EMAIL_TAKEN", "Cette adresse email est déjà utilisée.")
 
-    user = accounts.create_account(db, body.email, body.role, password_hash=hash_password(body.password))
+    user = accounts.create_account(
+        db, body.email, body.role, password_hash=hash_password(body.password), display_name=body.display_name
+    )
     response = accounts.issue_tokens(db, user)
     db.commit()
     return response
@@ -153,7 +155,7 @@ def google_callback(
             code_hash=digest,
             user_id=user.id,
             code_challenge=chosen["cc"],
-            expires_at=utcnow() + timedelta(minutes=2),
+            expires_at=utcnow() + timedelta(minutes=settings.auth_code_minutes),
         )
     )
     db.commit()

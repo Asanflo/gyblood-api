@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, UploadFile
+from fastapi.responses import FileResponse
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,7 @@ from app.models import Campaign, CampaignMember, Funding, User
 from app.services import payments as payment_service
 from app.services.campaigns import ensure_open, funds_received, has_joined
 from app.utils import as_utc, utcnow
+from app.services import storage
 
 router = APIRouter(tags=["campaigns"])
 
@@ -59,6 +62,27 @@ def list_campaigns(user: User = Depends(active_user), page: PageParams = Depends
 def get_campaign(campaign_id: int, user: User = Depends(active_user), db: Session = Depends(get_db)):
     return _dto(db, _get(db, campaign_id), user)
 
+@router.post("/campaigns/{campaign_id}/image", response_model=s.CampaignDto)
+def upload_campaign_image(campaign_id: int, file: UploadFile, user: User = StructureOnly, db: Session = Depends(get_db)):
+    """La structure propriétaire ajoute ou remplace l'affiche de sa campagne (JPEG ou PNG)."""
+    campaign = _get(db, campaign_id)
+    if campaign.structure_id != user.id:
+        raise ApiError(403, "FORBIDDEN", "Cette campagne n'appartient pas à votre structure.")
+    new_name = storage.save_image(file)
+    old_name, campaign.image_path = campaign.image_path, new_name
+    db.commit()
+    storage.delete_document(old_name)
+    return _dto(db, campaign, user)
+
+
+@router.get("/campaigns/{campaign_id}/image")
+def get_campaign_image(campaign_id: int, db: Session = Depends(get_db)):
+    """Affiche publique (non sensible), sans jeton : le mobile la charge directement depuis son URL."""
+    campaign = _get(db, campaign_id)
+    if not campaign.image_path:
+        raise ApiError(404, "IMAGE_NOT_FOUND", "Cette campagne n'a pas d'affiche.")
+    path, media_type = storage.document_path(campaign.image_path)
+    return FileResponse(path, media_type=media_type, headers={"Cache-Control": f"public, max-age={settings.image_cache_seconds}"})
 
 @router.post("/campaigns/{campaign_id}/join", status_code=204)
 def join_campaign(campaign_id: int, user: User = DonorOnly, db: Session = Depends(get_db)):

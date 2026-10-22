@@ -44,7 +44,7 @@ def search_donors(
     rhesus: Rhesus,
     lat: Annotated[float, Query(ge=-90, le=90)],
     lon: Annotated[float, Query(ge=-180, le=180)],
-    radius_km: Annotated[float, Query(alias="radiusKm", gt=0)] = 10,
+    radius_km: Annotated[float, Query(alias="radiusKm", gt=0)] = settings.default_search_radius_km,
     user: User = PatientOnly,
     db: Session = Depends(get_db),
 ):
@@ -73,7 +73,7 @@ def search_donors(
             or_(*compatible),
             DonorProfile.user_id.not_in(committed),
         )
-        .limit(500)
+        .limit(settings.search_candidate_limit)
     ).all()
 
     intervals = load_intervals(db)
@@ -93,5 +93,5 @@ def search_donors(
                 )
             )
     found.sort(key=lambda d: d.distance_km)
-    return found[:50]
+    return found[:settings.search_max_results]
 

@@ -9,7 +9,7 @@ import jwt
 
 from app.config import settings
 
-_ALGORITHM = "HS256"
+_ALGORITHM = settings.jwt_algorithm
 
 
 # ------------------------------------------------------------------ mots de passe
@@ -57,7 +57,7 @@ def decode_access_token(token: str) -> dict:
 
 
 def encode_oauth_state(role: str, code_challenge: str) -> str:
-    return _encode({"typ": "oauth_state", "role": role, "cc": code_challenge, "n": secrets.token_urlsafe(8)}, 10)
+        return _encode({"typ": "oauth_state", "role": role, "cc": code_challenge, "n": secrets.token_urlsafe(8)}, settings.oauth_state_minutes)
 
 
 def decode_oauth_state(state: str) -> dict:

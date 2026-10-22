@@ -10,7 +10,7 @@ from app.routers import admin, appointments, auth, campaigns, donors, me, notifi
 from app.seed import seed_defaults
 
 logging.basicConfig(level=logging.INFO)
-API_PREFIX = "/api/v1"
+app.include_router(module.router, prefix=settings.api_prefix)
 
 
 @asynccontextmanager

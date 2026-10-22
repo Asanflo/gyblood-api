@@ -237,6 +237,7 @@ class Campaign(Base):
     end_date: Mapped[datetime] = mapped_column(UTCDateTime)
     target_donations: Mapped[int] = mapped_column(Integer)
     description: Mapped[Optional[str]] = mapped_column(Text)
+    image_path: Mapped[Optional[str]] = mapped_column(String(80))
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     structure: Mapped[StructureProfile] = relationship()

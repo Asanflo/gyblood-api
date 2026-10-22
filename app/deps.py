@@ -10,6 +10,7 @@ from app.enums import AccountStatus, UserRole
 from app.errors import ApiError
 from app.models import User
 from app.security import decode_access_token
+from app.config import settings
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -57,6 +58,6 @@ def require_roles(*roles: UserRole, validated: bool = False) -> Callable[..., Us
 
 
 class PageParams:
-    def __init__(self, page: int = Query(0, ge=0), size: int = Query(20, ge=1, le=100)):
+    def __init__(self, page: int = Query(0, ge=0), size: int = Query(settings.page_default_size, ge=1, le=settings.page_max_size)):
         self.page = page
         self.size = size
