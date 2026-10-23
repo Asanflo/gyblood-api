@@ -2,14 +2,12 @@ import os
 
 import cloudinary
 import cloudinary.uploader
+from app.config import settings
 
 from app.errors import ApiError
 
 
 def _configure_cloudinary():
-    cloud_name = os.environ.get("CLOUDINARY_CLOUD_NAME")
-    api_key = os.environ.get("CLOUDINARY_API_KEY")
-    api_secret = os.environ.get("CLOUDINARY_API_SECRET")
 
     if not all((cloud_name, api_key, api_secret)):
         raise RuntimeError("Configuration Cloudinary incomplète")
