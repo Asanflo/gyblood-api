@@ -31,7 +31,7 @@ def build_auth_url(state: str) -> str:
         "client_id": settings.google_client_id,
         "redirect_uri": redirect_uri(),
         "response_type": "code",
-        "scope": "openid email profile",
+        "scope": settings.google_scope,
         "state": state,
         "prompt": "select_account",
     }

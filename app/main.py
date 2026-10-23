@@ -10,7 +10,6 @@ from app.routers import admin, appointments, auth, campaigns, donors, me, notifi
 from app.seed import seed_defaults
 
 logging.basicConfig(level=logging.INFO)
-app.include_router(module.router, prefix=settings.api_prefix)
 
 
 @asynccontextmanager
@@ -36,7 +35,7 @@ install_handlers(app)
 for module in (
     auth, me, patients, donors, appointments, payments, structures, campaigns, sponsors, notifications, admin
 ):
-    app.include_router(module.router, prefix=API_PREFIX)
+    app.include_router(module.router, prefix=settings.api_prefix)
 app.include_router(auth.oauth_router)  # /oauth2/... à la racine, comme l'attend l'application
 
 

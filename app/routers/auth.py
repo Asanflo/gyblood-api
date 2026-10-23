@@ -30,7 +30,7 @@ from app.utils import as_utc, utcnow
 router = APIRouter(tags=["auth"])  # monté sous /api/v1
 oauth_router = APIRouter(tags=["oauth"])  # monté à la racine : /oauth2/...
 
-APP_CALLBACK = settings.app_callback 
+APP_CALLBACK = settings.mobile_callback_url
 
 
 @router.post("/auth/register", response_model=s.AuthResponse, status_code=201)
