@@ -1,6 +1,4 @@
-"""Énumérations du contrat avec l'application MAUI.
-
-Les valeurs sont en MAJUSCULES_AVEC_TIRET_BAS : c'est ce que produit JsonNamingPolicy.SnakeCaseUpper côté C#
+"""Les valeurs sont en MAJUSCULES_AVEC_TIRET_BAS : c'est ce que produit JsonNamingPolicy.SnakeCaseUpper côté C#
 (Requested -> REQUESTED, NoShow -> NO_SHOW, MtnMomo -> MTN_MOMO).
 """
 

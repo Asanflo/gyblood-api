@@ -71,6 +71,10 @@ class Settings(BaseSettings):
     # Fichier JSON du compte de service Firebase. Vide : pas de push, les notifications restent lisibles via l'API.
     fcm_credentials_file: str | None = None
 
+    cloudinary_cloud_name: str | None = None
+    cloudinary_api_key: str | None = None
+    cloudinary_api_secret: str | None = None
+
     @model_validator(mode="after")
     def _check_production(self) -> "Settings":
         if self.app_env == "prod":

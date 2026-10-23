@@ -76,13 +76,49 @@ def upload_campaign_image(campaign_id: int, file: UploadFile, user: User = Struc
 
 
 @router.get("/campaigns/{campaign_id}/image")
-def get_campaign_image(campaign_id: int, db: Session = Depends(get_db)):
-    """Affiche publique (non sensible), sans jeton : le mobile la charge directement depuis son URL."""
+def get_campaign_image(
+    campaign_id: int,
+    db: Session = Depends(get_db),
+):
+    """Affiche publique : Cloudinary ou ancien fichier local."""
+
     campaign = _get(db, campaign_id)
+
     if not campaign.image_path:
-        raise ApiError(404, "IMAGE_NOT_FOUND", "Cette campagne n'a pas d'affiche.")
-    path, media_type = storage.document_path(campaign.image_path)
-    return FileResponse(path, media_type=media_type, headers={"Cache-Control": f"public, max-age={settings.image_cache_seconds}"})
+        raise ApiError(
+            404, "IMAGE_NOT_FOUND",
+            "Cette campagne n'a pas d'affiche."
+        )
+
+    image_path = campaign.image_path
+
+    # N'accepter une redirection que vers le domaine Cloudinary attendu.
+    parsed = urlparse(image_path)
+
+    if (
+        parsed.scheme == "https"
+        and parsed.hostname == "res.cloudinary.com"
+    ):
+        return RedirectResponse(
+            url=image_path,
+            status_code=307,
+            headers={
+                "Cache-Control":
+                    f"public, max-age={settings.image_cache_seconds}"
+            },
+        )
+
+    # Compatibilité avec les anciennes images locales.
+    path, media_type = storage.document_path(image_path)
+
+    return FileResponse(
+        path,
+        media_type=media_type,
+        headers={
+            "Cache-Control":
+                f"public, max-age={settings.image_cache_seconds}"
+        },
+    )
 
 @router.post("/campaigns/{campaign_id}/join", status_code=204)
 def join_campaign(campaign_id: int, user: User = DonorOnly, db: Session = Depends(get_db)):

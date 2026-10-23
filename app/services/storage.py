@@ -4,6 +4,10 @@ import uuid
 from pathlib import Path
 
 from fastapi import UploadFile
+import cloudinary
+import cloudinary.uploader
+
+from .cloudinary_storage import upload_public_image
 
 from app.config import settings
 from app.errors import ApiError
@@ -40,20 +44,40 @@ def save_document(upload: UploadFile) -> str:
     (_root() / name).write_bytes(data)
     return name
 
-def save_image(upload: UploadFile) -> str:
-    """Image publique (affiche de campagne) : JPEG ou PNG uniquement, mêmes limites de taille."""
+def save_image(upload: UploadFile) -> dict:
+    """Valide une image puis la stocke dans Cloudinary."""
+
     limit = settings.max_document_bytes
     data = upload.file.read(limit + 1)
+
     if len(data) > limit:
-        raise ApiError(400, "FILE_TOO_LARGE", f"Image trop volumineuse ({limit // (1024 * 1024)} Mo maximum).")
+        raise ApiError(
+            400,
+            "FILE_TOO_LARGE",
+            f"Image trop volumineuse "
+            f"({limit // (1024 * 1024)} Mo maximum).",
+        )
+
     if not data:
         raise ApiError(400, "FILE_EMPTY", "L'image est vide.")
-    extension = next((ext for sig, ext, _ in _SIGNATURES if ext != ".pdf" and data.startswith(sig)), None)
+
+    extension = next(
+        (
+            ext
+            for sig, ext, _ in _SIGNATURES
+            if ext != ".pdf" and data.startswith(sig)
+        ),
+        None,
+    )
+
     if extension is None:
-        raise ApiError(400, "FILE_TYPE_INVALID", "Format non accepté : envoyez une image JPEG ou PNG.")
-    name = f"{uuid.uuid4().hex}{extension}"
-    (_root() / name).write_bytes(data)
-    return name
+        raise ApiError(
+            400,
+            "FILE_TYPE_INVALID",
+            "Format non accepté : envoyez une image JPEG ou PNG.",
+        )
+
+    return upload_public_image(data, extension)
 
 def document_path(name: str) -> tuple[Path, str]:
     """Chemin et type MIME d'un document enregistré. Refuse tout nom qui sortirait du dossier."""
