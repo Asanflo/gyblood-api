@@ -87,10 +87,57 @@ def document_path(name: str) -> tuple[Path, str]:
     return path, _MEDIA_TYPES.get(path.suffix, "application/octet-stream")
 
 
-def delete_document(name: str | None) -> None:
+def delete_document(name: str | dict | None) -> None:
+    """Supprime une image Cloudinary ou un document stocké localement."""
     if not name:
         return
+
+    # Image Cloudinary retournée par save_image()
+    if isinstance(name, dict):
+        public_id = name.get("public_id")
+
+        if public_id:
+            cloudinary.uploader.destroy(
+                public_id,
+                resource_type="image",
+            )
+        return
+
+    # URL Cloudinary enregistrée dans campaign.image_path
+    if isinstance(name, str) and "res.cloudinary.com" in name:
+        from urllib.parse import urlparse
+        import re
+
+        parsed = urlparse(name)
+        parts = parsed.path.split("/")
+
+        try:
+            upload_index = parts.index("upload")
+            asset_parts = parts[upload_index + 1:]
+
+            # Ignorer une éventuelle version v123456789/
+            if asset_parts and re.fullmatch(r"v\d+", asset_parts[0]):
+                asset_parts = asset_parts[1:]
+
+            if not asset_parts:
+                return
+
+            # Enlever l'extension du fichier
+            asset_parts[-1] = asset_parts[-1].rsplit(".", 1)[0]
+            public_id = "/".join(asset_parts)
+
+            cloudinary.uploader.destroy(
+                public_id,
+                resource_type="image",
+            )
+        except (ValueError, IndexError):
+            return
+
+        return
+
+    # Document stocké localement : certificat PDF, JPEG ou PNG
     path = (_root() / name).resolve()
+
     if path.parent == _root() and path.is_file():
         path.unlink()
 

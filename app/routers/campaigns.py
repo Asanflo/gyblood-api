@@ -62,17 +62,62 @@ def list_campaigns(user: User = Depends(active_user), page: PageParams = Depends
 def get_campaign(campaign_id: int, user: User = Depends(active_user), db: Session = Depends(get_db)):
     return _dto(db, _get(db, campaign_id), user)
 
+
 @router.post("/campaigns/{campaign_id}/image", response_model=s.CampaignDto)
-def upload_campaign_image(campaign_id: int, file: UploadFile, user: User = StructureOnly, db: Session = Depends(get_db)):
-    """La structure propriétaire ajoute ou remplace l'affiche de sa campagne (JPEG ou PNG)."""
+def upload_campaign_image(
+    campaign_id: int,
+    file: UploadFile,
+    user: User = StructureOnly,
+    db: Session = Depends(get_db),
+):
+    """La structure propriétaire ajoute ou remplace l'affiche de sa campagne."""
+
     campaign = _get(db, campaign_id)
+
     if campaign.structure_id != user.id:
-        raise ApiError(403, "FORBIDDEN", "Cette campagne n'appartient pas à votre structure.")
-    new_name = storage.save_image(file)
-    old_name, campaign.image_path = campaign.image_path, new_name
-    db.commit()
-    storage.delete_document(old_name)
+        raise ApiError(
+            403,
+            "FORBIDDEN",
+            "Cette campagne n'appartient pas à votre structure.",
+        )
+
+    # Sauvegarder l'image sur Cloudinary.
+    new_image = storage.save_image(file)
+
+    # Récupérer l'URL si le stockage retourne un dictionnaire.
+    new_url = (
+        new_image["url"]
+        if isinstance(new_image, dict)
+        else new_image
+    )
+
+    old_url = campaign.image_path
+    campaign.image_path = new_url
+
+    try:
+        db.commit()
+        db.refresh(campaign)
+    except Exception:
+        db.rollback()
+
+        # Supprimer la nouvelle image si l'enregistrement en base échoue.
+        try:
+            storage.delete_document(new_image)
+        except Exception:
+            pass
+
+        raise
+
+    # Supprimer l'ancienne image uniquement après la validation en base.
+    if old_url:
+        try:
+            storage.delete_document(old_url)
+        except Exception:
+            # Ne pas annuler une mise à jour déjà validée.
+            pass
+
     return _dto(db, campaign, user)
+
 
 
 @router.get("/campaigns/{campaign_id}/image")
